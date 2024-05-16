@@ -1,0 +1,29 @@
+services:
+
+  nginx:
+    # default port 8443, 80
+    image: nginx:1
+    container_name: redirect-nginx
+    networks:
+      - redirect-portal
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+#      - /root/cert/redirect:/etc/ssl/redirect:ro
+#      - /root/cert/dev:/etc/letsencrypt/dev:ro
+#      - /root/cert/www:/etc/letsencrypt/www:ro
+#      - /root/cert/base:/etc/letsencrypt/base:ro
+#      - /root/cert/whatisfabric:/etc/letsencrypt/whatisfabric:ro
+      - /Users/stealey/GitHub/fabric/fabric-redirect/cert/redirect:/etc/ssl/redirect:ro
+      - /Users/stealey/GitHub/fabric/fabric-redirect/cert/dev:/etc/letsencrypt/dev:ro
+      - /Users/stealey/GitHub/fabric/fabric-redirect/cert/www:/etc/letsencrypt/www:ro
+      - /Users/stealey/GitHub/fabric/fabric-redirect/cert/base:/etc/letsencrypt/base:ro
+      - /Users/stealey/GitHub/fabric/fabric-redirect/cert/whatisfabric:/etc/letsencrypt/whatisfabric:ro
+    restart: unless-stopped
+
+networks:
+  redirect-portal:
+    name: redirect-portal
+    driver: bridge
