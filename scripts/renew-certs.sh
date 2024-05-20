@@ -4,14 +4,14 @@
 DAYS_BEFORE_RENEW=15
 
 ### hostnames to check
-HOSTNAMES_TO_CHECK=( \
-    "redirect.fabric-testbed.net,/Users/stealey/GitHub/fabric/fabric-redirect/cert/redirect" \
-    "dev.fabric-testbed.net,/Users/stealey/GitHub/fabric/fabric-redirect/cert/dev" \
-    "www.fabric-testbed.net,/Users/stealey/GitHub/fabric/fabric-redirect/cert/www" \
-    "fabric-testbed.net,/Users/stealey/GitHub/fabric/fabric-redirect/cert/base" \
-    "whatisfabric.net,/Users/stealey/GitHub/fabric/fabric-redirect/cert/whatisfabric" \
+HOSTNAMES_TO_CHECK=(
+    "redirect.fabric-testbed.net,$(pwd)/cert/redirect"
+    "dev.fabric-testbed.net,$(pwd)/cert/dev"
+    "www.fabric-testbed.net,$(pwd)/cert/www"
+    "fabric-testbed.net,$(pwd)/cert/base"
+    "whatisfabric.net,$(pwd)/cert/whatisfabric"
 )
-#    HOSTNAMES_TO_CHECK=( \
+#HOSTNAMES_TO_CHECK=( \
 #    "redirect.fabric-testbed.net,/root/cert/redirect" \
 #    "dev.fabric-testbed.net,/root/cert/dev" \
 #    "www.fabric-testbed.net,/root/cert/www" \
@@ -31,12 +31,12 @@ get_days_remaining() {
         ts_expiry=$(date -j -f "$INPUT_FORMAT" "$INPUT_DATE" +"$OUTPUT_FORMAT")
     elif [[ "$PLATFORM" == "Linux" ]]; then
         # Linux
-        date -d "$INPUT_DATE" +"$OUTPUT_FORMAT"
+        ts_expiry=$(date -d "$INPUT_DATE" +"$OUTPUT_FORMAT")
     else
-    # Unsupported system
+        # Unsupported system
         echo "Unsupported system"
     fi
-    echo $(( ( ts_expiry - ts_now )/(60*60*24) ))
+    echo $(((ts_expiry - ts_now) / (60 * 60 * 24)))
 }
 
 check_certificate_expiry() {
@@ -55,10 +55,10 @@ check_certificate_expiry() {
     time_to_renew=0
     echo "### Checking certificate expiry for $1 ###"
     result="$(./ez_letsencrypt.sh -h "$1" -k)"
-    while IFS= read -r line
-    do
+    while IFS= read -r line; do
+        echo "$line"
         # determine if cert is Let's Encrypt generated
-        if [[ "$line" == *"O=Let's Encrypt"* ]]; then
+        if [[ "$line" == *"Let's Encrypt"* ]]; then
             is_lets_encrypt=1
         fi
         # determine if it time to renew the certificate
@@ -68,7 +68,9 @@ check_certificate_expiry() {
                 time_to_renew=1
             fi
         fi
-    done <<< "$result"
+    done <<<"$result"
+    echo "-- ["$is_lets_encrypt"] is_lets_encrypt"
+    echo "-- ["$time_to_renew"] time_to_renew"
     if [[ "$is_lets_encrypt" == 1 && "$time_to_renew" == 1 ]]; then
         return 1
     else
@@ -77,11 +79,11 @@ check_certificate_expiry() {
 }
 
 renew_lets_encrypt_certificate() {
+    docker stop letsencrypt_nginx && docker rm -fv letsencrypt_nginx
     ./ez_letsencrypt.sh -h "$1" \
         --certsdir "$2" \
-        --webrootdir "$(pwd)/acme_challenge" \
+        --webrootdir ./acme_challenge \
         --renew \
-        --dryrun \
         --verbose
 }
 
@@ -93,7 +95,11 @@ for line in "${HOSTNAMES_TO_CHECK[@]}"; do
     cert_path="$(echo "$line" | cut -d "," -f 2)"
     check_certificate_expiry "$host"
     renew_cert=$?
-    echo "Renew Cert? $renew_cert"
+    if [[ "$renew_cert" == 1 ]]; then
+        echo "-- Renew Cert? Yes"
+    else
+        echo "-- Renew Cert? No"
+    fi
     if [[ $renew_cert == 1 ]]; then
         echo "-- Renewing certificate located at $cert_path"
         # stop redirect service
@@ -109,9 +115,10 @@ for line in "${HOSTNAMES_TO_CHECK[@]}"; do
         sleep 10s
         # verify new certificates
         echo "-- Verify new certificate"
-        new_cert=$(check_certificate_expiry "$host")
-        if [[ $new_cert == 0 ]]; then
-            echo "-- Certificate successfully renewed"
+        check_certificate_expiry "$host"
+        new_cert=$?
+        if [[ $new_cert != 0 ]]; then
+            echo "-- [SUCCESS] Certificate successfully renewed"
         else
             echo "-- [ERROR] Unable to renew certificate"
         fi

@@ -16,11 +16,11 @@ services:
 #      - /root/cert/www:/etc/letsencrypt/www:ro
 #      - /root/cert/base:/etc/letsencrypt/base:ro
 #      - /root/cert/whatisfabric:/etc/letsencrypt/whatisfabric:ro
-      - /Users/stealey/GitHub/fabric/fabric-redirect/cert/redirect:/etc/ssl/redirect:ro
-      - /Users/stealey/GitHub/fabric/fabric-redirect/cert/dev:/etc/letsencrypt/dev:ro
-      - /Users/stealey/GitHub/fabric/fabric-redirect/cert/www:/etc/letsencrypt/www:ro
-      - /Users/stealey/GitHub/fabric/fabric-redirect/cert/base:/etc/letsencrypt/base:ro
-      - /Users/stealey/GitHub/fabric/fabric-redirect/cert/whatisfabric:/etc/letsencrypt/whatisfabric:ro
+      - ./cert/redirect:/etc/ssl/redirect:ro
+      - ./cert/dev:/etc/letsencrypt/dev:ro
+      - ./cert/www:/etc/letsencrypt/www:ro
+      - ./cert/base:/etc/letsencrypt/base:ro
+      - ./cert/whatisfabric:/etc/letsencrypt/whatisfabric:ro
     restart: unless-stopped
 
 networks:
