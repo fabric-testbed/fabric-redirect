@@ -11,16 +11,13 @@ services:
       - "443:443"
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-#      - /root/cert/redirect:/etc/ssl/redirect:ro
-#      - /root/cert/dev:/etc/letsencrypt/dev:ro
-#      - /root/cert/www:/etc/letsencrypt/www:ro
-#      - /root/cert/base:/etc/letsencrypt/base:ro
-#      - /root/cert/whatisfabric:/etc/letsencrypt/whatisfabric:ro
-      - ./cert/redirect:/etc/ssl/redirect:ro
-      - ./cert/dev:/etc/letsencrypt/dev:ro
-      - ./cert/www:/etc/letsencrypt/www:ro
-      - ./cert/base:/etc/letsencrypt/base:ro
-      - ./cert/whatisfabric:/etc/letsencrypt/whatisfabric:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - /opt/data/production/logs/nginx/redirect:/var/log/nginx
+      - /root/cert/redirect:/etc/ssl/redirect:ro
+      - /root/cert/dev:/etc/letsencrypt/dev:ro
+      - /root/cert/www:/etc/letsencrypt/www:ro
+      - /root/cert/base:/etc/letsencrypt/base:ro
+      - /root/cert/whatisfabric:/etc/letsencrypt/whatisfabric:ro
     restart: unless-stopped
 
 networks:

@@ -37,9 +37,17 @@ Many of the certificates are managed by Let's Encrypt, and as such are checked r
 
 A certificate renewal script named `renew-certs.sh` is in the `scripts/` directory and should be run periodically to check certificate status.
 
-The script is set to make a renewal atempt if a Let's Encrypt certificate is found to be expiring within the next 15 or fewer days.
+The script is set to make a renewal attempt if a Let's Encrypt certificate is found to be expiring within the next 15 or fewer days.
 
-The script can be run manually or using a tool like `cron`
+The script can be run manually or using a tool like `cron`.
+
+### Safety features
+
+- **Lock file** — prevents concurrent runs (`/tmp/fabric-redirect-renew.lock`)
+- **Docker preflight check** — exits with a clear error if the Docker daemon is unavailable
+- **Port conflict detection** — verifies `redirect-nginx` is stopped and port 80 is free before attempting renewal
+- **Unreachable host detection** — warns and skips hosts when the certificate check returns empty output
+- **Non-zero exit code on failure** — exits `1` if any renewal fails, enabling cron alerting
 
 ### Run script manually
 
@@ -51,45 +59,45 @@ Example:
 
 ```console
 $ ./renew-certs.sh
-Run at: Mon May 20 14:43:30 UTC 2024
+Run at: Sat Feb 28 21:39:58 UTC 2026
 #############
 ### Checking certificate expiry for redirect.fabric-testbed.net ###
 issuer=C = US, O = Internet2, CN = InCommon RSA Server CA 2
-subject=C = US, ST = Kentucky, O = University of Kentucky, CN = redirect.fabric-testbed.net
-notBefore=Feb  5 00:00:00 2024 GMT
-notAfter=Feb  4 23:59:59 2025 GMT
+subject=C = US, ST = Kentucky, O = University of Kentucky, CN = fabric-other-services.fabric-testbed.net
+notBefore=Sep 23 00:00:00 2025 GMT
+notAfter=Sep 15 23:59:59 2026 GMT
 -- [0] is_lets_encrypt
 -- [0] time_to_renew
 -- Renew Cert? No
 ### Checking certificate expiry for dev.fabric-testbed.net ###
-issuer=C = US, O = Let's Encrypt, CN = R3
+issuer=C = US, O = Let's Encrypt, CN = E7
 subject=CN = dev.fabric-testbed.net
-notBefore=May 17 12:40:32 2024 GMT
-notAfter=Aug 15 12:40:31 2024 GMT
+notBefore=Feb 20 15:16:04 2026 GMT
+notAfter=May 21 15:16:03 2026 GMT
 -- [1] is_lets_encrypt
 -- [0] time_to_renew
 -- Renew Cert? No
 ### Checking certificate expiry for www.fabric-testbed.net ###
-issuer=C = US, O = Let's Encrypt, CN = R3
+issuer=C = US, O = Let's Encrypt, CN = E8
 subject=CN = www.fabric-testbed.net
-notBefore=May 17 12:41:13 2024 GMT
-notAfter=Aug 15 12:41:12 2024 GMT
+notBefore=Feb 20 15:16:25 2026 GMT
+notAfter=May 21 15:16:24 2026 GMT
 -- [1] is_lets_encrypt
 -- [0] time_to_renew
 -- Renew Cert? No
 ### Checking certificate expiry for fabric-testbed.net ###
-issuer=C = US, O = Let's Encrypt, CN = R3
+issuer=C = US, O = Let's Encrypt, CN = E8
 subject=CN = fabric-testbed.net
-notBefore=May 17 12:41:58 2024 GMT
-notAfter=Aug 15 12:41:57 2024 GMT
+notBefore=Feb 20 15:15:41 2026 GMT
+notAfter=May 21 15:15:40 2026 GMT
 -- [1] is_lets_encrypt
 -- [0] time_to_renew
 -- Renew Cert? No
 ### Checking certificate expiry for whatisfabric.net ###
-issuer=C = US, O = Let's Encrypt, CN = R3
+issuer=C = US, O = Let's Encrypt, CN = E7
 subject=CN = whatisfabric.net
-notBefore=Mar 11 17:04:18 2024 GMT
-notAfter=Jun  9 17:04:17 2024 GMT
+notBefore=Feb 20 15:13:55 2026 GMT
+notAfter=May 21 15:13:54 2026 GMT
 -- [1] is_lets_encrypt
 -- [0] time_to_renew
 -- Renew Cert? No
@@ -97,11 +105,17 @@ notAfter=Jun  9 17:04:17 2024 GMT
 
 ### Run script using `cron`
 
-Using `crontab` setup a cron job to check the renewal status of Let's Encrypt certificates daily at 1 am
+Using `crontab -e`, set up a cron job to check the renewal status of Let's Encrypt certificates daily at midnight EST (5:00 UTC). Output is logged to a file, and a Slack notification is sent if any renewal fails.
 
 ```console
-# Check renewal status of Let's Encrypt certificates at 1 am each day
-0 1 * * * cd /home/nrig-service/fabric-redirect/scripts/; ./renew-certs.sh 2>&1 | tee -a /home/nrig-service/fabric-redirect.log
+0 5 * * * /home/nrig-service/fabric-redirect/scripts/renew-certs.sh >> /home/nrig-service/fabric-redirect/scripts/fabric-redirect.log 2>&1 || curl -X POST -H 'Content-type: application/json' --data '{"text":"[FABRIC] Cert renewal failed — check logs"}' https://hooks.slack.com/services/YOUR/WEBHOOK/URL
 ```
 
-This will run using the `cron` service daily at 1 am and log the output to a file named `fabric-redirect.log`.
+> **Note:** The cron entry must be a single line. The `||` ensures the `curl` command only runs when the script exits with a non-zero status.
+
+Alternatively, to receive email alerts instead of Slack notifications, add a `MAILTO` line above the cron entry:
+
+```console
+MAILTO=your@email.com
+0 5 * * * /home/nrig-service/fabric-redirect/scripts/renew-certs.sh >> /home/nrig-service/fabric-redirect/scripts/fabric-redirect.log 2>&1
+```
