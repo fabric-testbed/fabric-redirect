@@ -31,13 +31,16 @@ DAYS_BEFORE_RENEW=15
 ### track overall success
 HAD_ERRORS=0
 
+### cert base directory (must match the source paths bind-mounted in docker-compose.yml)
+CERT_BASE_DIR="${CERT_BASE_DIR:-/root/cert}"
+
 ### hostnames to check
 HOSTNAMES_TO_CHECK=(
-    "redirect.fabric-testbed.net,$PROJECT_ROOT/cert/redirect"
-    "dev.fabric-testbed.net,$PROJECT_ROOT/cert/dev"
-    "www.fabric-testbed.net,$PROJECT_ROOT/cert/www"
-    "fabric-testbed.net,$PROJECT_ROOT/cert/base"
-    "whatisfabric.net,$PROJECT_ROOT/cert/whatisfabric"
+    "redirect.fabric-testbed.net,$CERT_BASE_DIR/redirect"
+    "dev.fabric-testbed.net,$CERT_BASE_DIR/dev"
+    "www.fabric-testbed.net,$CERT_BASE_DIR/www"
+    "fabric-testbed.net,$CERT_BASE_DIR/base"
+    "whatisfabric.net,$CERT_BASE_DIR/whatisfabric"
 )
 
 get_days_remaining() {
