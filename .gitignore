@@ -1,0 +1,14 @@
+# IDE/editor
+.idea/
+.claude/
+
+# Local-only setup notes (example commands; not deployment docs)
+INSTALL.md
+
+# Logs
+*.log
+
+# Cert state and ACME challenge dirs
+# Production cert state lives at /root/cert/ on the deployment host (see README)
+/cert/
+**/acme_challenge/

@@ -49,6 +49,18 @@ The script can be run manually or using a tool like `cron`.
 - **Unreachable host detection** — warns and skips hosts when the certificate check returns empty output
 - **Non-zero exit code on failure** — exits `1` if any renewal fails, enabling cron alerting
 
+### Certificate storage
+
+On the deployment host, Let's Encrypt cert state lives under `/root/cert/<name>/` — one subdirectory per domain (`dev/`, `www/`, `base/`, `whatisfabric/`), each containing a full certbot state tree (`accounts/`, `archive/`, `live/`, `renewal/`). These same paths are bind-mounted read-only into the `redirect-nginx` container by `docker-compose.yml`, so the script and nginx must agree on the location or `certbot renew` will report `No renewals were attempted.` against an empty directory.
+
+`renew-certs.sh` resolves the cert tree through the `CERT_BASE_DIR` environment variable (default `/root/cert`). To run the script against a different cert tree (e.g. a local test setup), override the variable at invocation time:
+
+```console
+CERT_BASE_DIR=/path/to/certs ./renew-certs.sh
+```
+
+The `redirect.fabric-testbed.net` certificate is managed externally by UKY (not Let's Encrypt) and is skipped by the renewal logic.
+
 ### Run script manually
 
 ```console
