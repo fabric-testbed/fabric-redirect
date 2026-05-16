@@ -201,7 +201,7 @@ run_certbot_container() {
         (true)
             case $renew in
                 (true)
-                    docker run -it --rm \
+                    docker run --rm \
                     -v $le_certsdir:/etc/letsencrypt:z,rw \
                     -v $le_webrootdir:/data/letsencrypt:z,rw \
                     certbot/certbot \
@@ -211,7 +211,7 @@ run_certbot_container() {
                     --rsa-key-size $rsa_key_size
                     ;;
                 (false )
-                    docker run -it --rm \
+                    docker run --rm \
                     -v $le_certsdir:/etc/letsencrypt:z,rw \
                     -v $le_webrootdir:/data/letsencrypt:z,rw \
                     certbot/certbot \
@@ -228,7 +228,7 @@ run_certbot_container() {
         (false)
             case $renew in
                 (true)
-                    docker run -it --rm \
+                    docker run --rm \
                     -v $le_certsdir:/etc/letsencrypt \
                     -v $le_webrootdir:/data/letsencrypt \
                     certbot/certbot \
@@ -238,7 +238,7 @@ run_certbot_container() {
                     --rsa-key-size $rsa_key_size
                     ;;
                 (false )
-                    docker run -it --rm \
+                    docker run --rm \
                     -v $le_certsdir:/etc/letsencrypt \
                     -v $le_webrootdir:/data/letsencrypt \
                     certbot/certbot \

@@ -93,7 +93,7 @@ check_certificate_expiry() {
 }
 
 renew_lets_encrypt_certificate() {
-    docker stop letsencrypt_nginx && docker rm -fv letsencrypt_nginx
+    docker rm -f letsencrypt_nginx >/dev/null 2>&1 || true
     "$SCRIPT_DIR/ez_letsencrypt.sh" -h "$1" \
         --certsdir "$2" \
         --webrootdir "$SCRIPT_DIR/acme_challenge" \
